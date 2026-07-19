@@ -1,77 +1,175 @@
+import { ubicacionesMexico } from './ubicaciones';
+import { TextField, MenuItem, Button } from '@mui/material';
 
 export default function Formulario({datos,handleChange, handleImageUpload}){
+
+    const estadosDisponibles = Object.keys(ubicacionesMexico);
+        const municipiosLugar = datos.lugarEstado 
+      ? ubicacionesMexico[datos.lugarEstado] || [] 
+      : [];
+    
+      const municipiosUltUbi = datos.ultUbiEstado 
+      ? ubicacionesMexico[datos.ultUbiEstado] || [] 
+      : [];
+
     return(
         <div style={{flex:'1', minWidth:'300px',backgroundColor: '#f8fafc',padding:'1.5rem', borderRadius: '10px'}}>
             <h2><strong>Ingresa los datos</strong></h2>
             <ul>
                 <li><strong>Nombre completo:</strong>
-                    <input type="text" name="nombre" value={datos.nombre} onChange={handleChange} style={inputStyle} />
+                    <input type="text" name="nombre" value={datos.nombre} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Edad:</strong>
-                    <input type="text" name="edad" value={datos.edad} onChange={handleChange} style={inputStyle} />
+                    <input type="number" min={1} max={125} name="edad" value={datos.edad} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Genero:</strong>
-                    <input type="text" name="genero" value={datos.genero} onChange={handleChange} style={inputStyle} />
+                    <select id="genero" name="genero" value={datos.genero} onChange={handleChange} className='inputStyle'>
+                    <option value="" disabled>Elige una opción</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                    </select>   
                 </li>
                 <li><strong>Fotografía de evidencia:</strong>
-                    <input type="file" accept="image/*" onChange={handleImageUpload} style={inputStyle} />
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="inputStyle" />
                 </li>
                 <li><strong>Fecha de desaparición:</strong>
-                    <input type="date" name="fecha" value={datos.fecha} onChange={handleChange} style={inputStyle} />
+                    <input type="date" name="fecha" value={datos.fecha} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Lugar:</strong>
-                    <input type="text" name="lugar" value={datos.lugar} onChange={handleChange} style={inputStyle} />
+                    <TextField
+                    select
+                    label="Estado"
+                    name="lugarEstado"
+                    value={datos.lugarEstado || ''}
+                    onChange={handleChange}
+                    className='inputStyle' >
+                        {estadosDisponibles.map((estado) => (
+                        <MenuItem key={estado} value={estado}>
+                            {estado}
+                        </MenuItem>
+                        ))}
+                    </TextField>
+
+                    {/* SELECTOR DE MUNICIPIO (Dinámico) */}
+                    <TextField
+                        select
+                        label="Municipio"
+                        name="lugarMunicipio"
+                        value={datos.lugarMunicipio || ''}
+                        onChange={handleChange}
+                        fullWidth
+                        variant="outlined"
+                        disabled={!datos.lugarEstado}> // ✨ Se desactiva si no hay estado elegido
+                    
+                        {/* Si no hay municipios (porque el arreglo está vacío), muestra un mensaje por defecto */}
+                        {municipiosLugar.length === 0 ? (
+                        <MenuItem value="" disabled>Selecciona un estado primero</MenuItem>
+                        ) : (
+                        /* Si sí hay municipios, los mapeamos todos */
+                        municipiosLugar.map((municipio) => (
+                            <MenuItem key={municipio} value={municipio}>
+                            {municipio}
+                            </MenuItem>
+                        ))
+                        )}
+                    </TextField>
                 </li>
-                <li><strong>Ultima ubicaión:</strong>
-                    <input type="text" name="ubicacion" value={datos.ubicacion} onChange={handleChange} style={inputStyle} />
+                <li><strong>Ultima ubicación:</strong>
+                    <TextField
+                    select
+                    label="Estado"
+                    name="ultUbiEstado"
+                    value={datos.ultUbiEstado || ''}
+                    onChange={handleChange}
+                    className='inputStyle'>
+                        {estadosDisponibles.map((estado) => (
+                        <MenuItem key={estado} value={estado}>
+                            {estado}
+                        </MenuItem>
+                        ))}
+                    </TextField>
+
+                    {/* SELECTOR DE MUNICIPIO (Dinámico) */}
+                    <TextField
+                        select
+                        label="Municipio"
+                        name="ultUbiMunicipio"
+                        value={datos.ultUbiMunicipio || ''}
+                        onChange={handleChange}
+                        fullWidth
+                        variant="outlined"
+                        disabled={!datos.ultUbiEstado}> // ✨ Se desactiva si no hay estado elegido
+                    
+                        {/* Si no hay municipios (porque el arreglo está vacío), muestra un mensaje por defecto */}
+                        {municipiosUltUbi.length === 0 ? (
+                        <MenuItem value="" disabled>Selecciona un estado primero</MenuItem>
+                        ) : (
+                        /* Si sí hay municipios, los mapeamos todos */
+                        municipiosUltUbi.map((municipio) => (
+                            <MenuItem key={municipio} value={municipio}>
+                            {municipio}
+                            </MenuItem>
+                        ))
+                        )}
+                    </TextField>
                 </li>
                 <li><strong>Vestimenta:</strong>
-                    <input type="text" name="vestimenta" value={datos.vestimenta} onChange={handleChange} style={inputStyle} />
+                    <input type="text" name="vestimenta" value={datos.vestimenta} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Estatura:</strong>
-                    <input type="text" name="estatura" value={datos.estatura} onChange={handleChange} style={inputStyle} />
+                    <TextField
+                        type="number"
+                        label="Estatura (metros)"
+                        name="estatura"
+                        value={datos.estatura || ''}
+                        onChange={handleChange}
+                        fullWidth
+                        slotProps={{
+                            htmlInput: {
+                            min: 0,
+                            max: 2.60,
+                            step: 0.01
+                            }
+                        }}
+                    />
                 </li>
                 <li><strong>Complexión:</strong>
-                    <input type="text" name="complexion" value={datos.complexion} onChange={handleChange} style={inputStyle} />
+                    <input type="text" name="complexion" value={datos.complexion} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Cara:</strong>
-                    <input type="text" name="cara" value={datos.cara} onChange={handleChange} style={inputStyle} />
+                    <input type="text" name="cara" value={datos.cara} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Color de piel:</strong>
-                    <input type="text" name="piel" value={datos.piel} onChange={handleChange} style={inputStyle} />
+                    <input type="text" name="piel" value={datos.piel} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Cabello:</strong>
-                    <input type="text" name="cabello" value={datos.cabello} onChange={handleChange} style={inputStyle} />
+                    <input type="text" name="cabello" value={datos.cabello} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Ojos:</strong>
-                    <input type="text" name="ojos" value={datos.ojos} onChange={handleChange} style={inputStyle} />
+                    <input type="text" name="ojos" value={datos.ojos} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Nariz:</strong>
-                    <input type="text" name="nariz" value={datos.nariz} onChange={handleChange} style={inputStyle} />
+                    <input type="text" name="nariz" value={datos.nariz} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Boca:</strong>
-                    <input type="text" name="boca" value={datos.boca} onChange={handleChange} style={inputStyle} />
+                    <input type="text" name="boca" value={datos.boca} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Labios:</strong>
-                    <input type="text" name="labios" value={datos.labios} onChange={handleChange} style={inputStyle} />
+                    <input type="text" name="labios" value={datos.labios} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Señas particulares:</strong>
-                    <textarea name="detalles" value={datos.detalles} onChange={handleChange} style={{ ...inputStyle, height: '80px' }} />
+                    <textarea name="detalles" value={datos.detalles} onChange={handleChange} className="inputStyle" />
                 </li>
             </ul>
             <p><strong>Medios de comunicación</strong></p>
             <ul>
                 <li><strong>Correo electronico:</strong>
-                    <input type="text" name="email" value={datos.email} onChange={handleChange} style={inputStyle} />
+                    <input type="text" name="email" value={datos.email} onChange={handleChange} className="inputStyle" />
                 </li>
                 <li><strong>Numero telefonico:</strong>
                     <input type="text" name="tel" value={datos.tel} onChange={handleChange} className="inputStyle" />
                 </li>
-            </ul>
-                
-            
+            </ul> 
         </div>
     );
 }
-
-const inputStyle = { width: '100%', padding: '0.2rem', marginTop: '0.25rem', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' };

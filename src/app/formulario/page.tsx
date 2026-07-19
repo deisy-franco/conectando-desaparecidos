@@ -13,8 +13,6 @@ export default function Page(){
         genero:'',
         foto: '/logo.png',
         fecha:'',
-        lugar:'',
-        ubicacion:'',
         vestimenta:'',
         estatura:'',
         complexion:'',
@@ -27,13 +25,49 @@ export default function Page(){
         labios:'',
         detalles:'',
         email:'',
-        tel:''
+        tel:'',
+        lugarEstado: '',
+        lugarMunicipio: '',
+        ultUbiEstado: '',
+        ultUbiMunicipio: ''
     });
 
     const plantillaRef = useRef(null);
     
       // 2. LAS FUNCIONES VIVEN AQUÍ
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const {name, value} = e.target;
+        if (name === 'edad'){
+            if (Number(value) > 125 || Number(value) < 0) return;
+            if (value.includes('.')) return;
+        }
+
+        if (name === 'estatura') {
+            // Convertimos el texto a número para evaluarlo
+            const numEstatura = Number(value);
+    
+            // Si es mayor a 2.60 o menor a 0, bloqueamos el guardado
+            if (numEstatura > 2.60 || numEstatura < 0) return; 
+        }
+
+        if (name === 'lugarEstado') {
+            setDatos({...datos, lugarEstado: value, lugarMunicipio: '' });
+            return;
+        }
+
+        if (name === 'ultUbiEstado') {
+            setDatos({...datos, ultUbiEstado: value, ultUbiMunicipio: '' });
+            return;
+        }
+
+        if (name === 'tel') {
+            // Esta pequeña expresión regular revisa que SOLO haya números (del 0 al 9) o que esté vacío
+            if (!/^\d*$/.test(value)) return;
+
+            // Protegemos que no se pasen de 10 dígitos (por si falla el HTML)
+            if (value.length > 10) return;
+        }
+
         setDatos({ ...datos, [e.target.name]: e.target.value });
     };
     
@@ -75,8 +109,11 @@ export default function Page(){
                 <div style={{height: 'fit-content'}} ref={plantillaRef}>    
                     <Plantilla datos={datos}></Plantilla>
                 </div>
-                <Button onClick={descargarPNG} variant="contained">
+                <Button onClick={descargarPNG} variant="contained" style={{margin:'1rem'}}>
                     Descargar PNG
+                </Button>
+                <Button variant="contained" color="success" style={{margin:'1rem'}}>
+                    Publicar
                 </Button>
             </div>
         </div>  

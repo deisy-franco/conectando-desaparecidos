@@ -1,22 +1,9 @@
 import React from 'react';
-import { FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
-import { Button } from '@mui/material';
+import CallIcon from '@mui/icons-material/Call';
+import EmailIcon from '@mui/icons-material/Email';
 
 
 export default function Plantilla({ datos }) {
-
-  const circleStyle = {
-    backgroundColor: '#7b1113', // El color rojo oscuro de tu imagen
-    color: '#ffffff',           // El icono en color blanco
-    borderRadius: '50%',        // Esto hace que el fondo sea un círculo perfecto
-    padding: '0.4rem',          // Espacio entre el icono y el borde del círculo
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '25px',              // Ancho y alto fijos para que no se deforme
-    height: '25px'
-  };
-
   return (
     <div style={{
       flex: '1',
@@ -44,7 +31,7 @@ export default function Plantilla({ datos }) {
               }} />
             <ul>
               <li style={{fontSize:20,paddingBottom: '1rem'}}><strong>FICHA DE BÚSQUEDA</strong></li>
-              <li>{datos.nombre}</li>
+              <li style={{fontSize:20}}>{datos.nombre}</li>
               <li><strong>Edad:</strong> {datos.edad}</li>
               <li><strong>Genero:</strong> {datos.genero}</li>
             </ul>
@@ -53,13 +40,13 @@ export default function Plantilla({ datos }) {
         )}
         <ul>
           <li><strong>Fecha de desaparición:</strong>{datos.fecha}</li>
-          <li><strong>Lugar:</strong>{datos.lugar}</li>
-          <li><strong>Última ubicación:</strong>{datos.ubicacion}</li>
+          <li><strong>Lugar:</strong>{datos.lugarMunicipio},{datos.lugarEstado}</li>
+          <li><strong>Última ubicación:</strong>{datos.ultUbiMunicipio},{datos.ultUbiEstado}</li>
           <li><strong>Vestimenta:</strong>{datos.vestimenta}</li>
         </ul>
         <p><strong>Descripción fisica</strong></p>
         <ul>
-          <li><strong>Estatura:</strong>{datos.estatura}</li>
+          <li><strong>Estatura:</strong>{datos.estatura} m</li>
           <li><strong>Complexión:</strong>{datos.complexion}</li>
           <li><strong>Cara:</strong>{datos.cara}</li>
           <li><strong>Color de piel:</strong>{datos.piel}</li>
@@ -77,10 +64,8 @@ export default function Plantilla({ datos }) {
       
           {/* Grupo del Teléfono */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={circleStyle}>
-              <FaPhoneAlt size={14} /> 
-            </div>
-            <span>{datos.tel}</span>
+            <CallIcon sx={{ color: '#7b1113'}}/>
+            <span>(+52) {datos.tel}</span>
           </div>
 
           {/* Una barrita separadora opcional como en tu imagen */}
@@ -88,9 +73,7 @@ export default function Plantilla({ datos }) {
 
           {/* Grupo del Correo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={circleStyle}>
-              <FaEnvelope size={14}/>
-            </div>
+            <EmailIcon sx={{ color: '#7b1113' }}/>
             <span>{datos.email}</span>
           </div>
 
