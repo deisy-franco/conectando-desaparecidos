@@ -1,0 +1,71 @@
+name: Validar Pull Requests
+
+on:
+  pull_request:
+    branches:
+      - QA
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+jobs:
+  validar-pull-request:
+    name: Validar flujo y proyecto
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validar ramas permitidas
+        shell: bash
+        env:
+          RAMA_ORIGEN: ${{ github.head_ref }}
+          RAMA_DESTINO: ${{ github.base_ref }}
+        run: |
+          echo "Rama de origen: $RAMA_ORIGEN"
+          echo "Rama de destino: $RAMA_DESTINO"
+
+          if [[ "$RAMA_DESTINO" == "QA" ]]; then
+            if [[ "$RAMA_ORIGEN" == feature/* ]]; then
+              echo "Flujo permitido: $RAMA_ORIGEN hacia QA"
+              exit 0
+            fi
+
+            echo "ERROR: QA solamente acepta Pull Requests desde feature/*."
+            exit 1
+          fi
+
+          if [[ "$RAMA_DESTINO" == "main" ]]; then
+            if [[ "$RAMA_ORIGEN" == "QA" ]]; then
+              echo "Flujo permitido: QA hacia main"
+              exit 0
+            fi
+
+            echo "ERROR: main solamente acepta Pull Requests desde QA."
+            exit 1
+          fi
+
+          echo "ERROR: flujo de ramas no permitido."
+          exit 1
+
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar ESLint
+        run: npm run lint --if-present
+
+      - name: Compilar proyecto
+        run: npm run build
