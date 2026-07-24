@@ -201,12 +201,12 @@ jobs:
       - name: Comprobar que la aplicación responda
         shell: powershell
         run: |
-          $url = "http://localhost:$env:TEST_PORT"
+          $url = "http://localhost:${env:TEST_PORT}"
           $aplicacionLista = $false
 
           for ($intento = 1; $intento -le 12; $intento++) {
             try {
-              Write-Host "Intento $intento: comprobando $url"
+              Write-Host "Intento ${intento}: comprobando $url"
 
               $respuesta = Invoke-WebRequest `
                 -Uri $url `
