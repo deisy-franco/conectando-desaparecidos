@@ -32,7 +32,7 @@ export default function Plantilla({ datos }) {
             <ul>
               <li style={{fontSize:20,paddingBottom: '1rem'}}><strong>FICHA DE BÚSQUEDA</strong></li>
               <li style={{fontSize:20}}>{datos.nombre}</li>
-              <li><strong>Edad:</strong> {datos.edad}</li>
+              <li><strong>Edad:</strong> {datos.edad} años</li>
               <li><strong>Genero:</strong> {datos.genero}</li>
             </ul>
             

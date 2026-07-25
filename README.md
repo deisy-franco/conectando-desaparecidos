@@ -19,3 +19,9 @@ Para los iconos de la interfaz, también necesitarás instalar esta librería:
 
 ```bash
 npm install react-icons
+npm install @mui/icons-material
+npm install @base-ui/react
+
+###Para lo de la localizacion
+npm install leaflet react-leaflet
+npm install @emotion/react @emotion/styled
