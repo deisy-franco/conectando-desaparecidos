@@ -144,9 +144,9 @@ jobs:
     needs:
       - validar-pull-request
 
-    # Docker solamente se ejecuta en Pull Requests hacia QA.
-    # También evita ejecutar código procedente de forks externos.
-    if: ${{ needs.validar-pull-request.result == 'success' && github.base_ref == 'QA' && github.event.pull_request.head.repo.full_name == github.repository }}
+    # Ejecutar Docker tanto en PR hacia QA como en PR hacia main
+    if: ${{ needs.validar-pull-request.result == 'success' && (github.base_ref == 'QA' || github.base_ref == 'main') && github.event.pull_request.head.repo.full_name == github.repository }}
+
 
     # Envía este trabajo al mismo runner autohospedado
     runs-on:
@@ -166,7 +166,7 @@ jobs:
       # Descargar nuevamente el código en el trabajo Docker
       # --------------------------------------------------------
       - name: Descargar código del Pull Request
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           clean: true
           fetch-depth: 1
