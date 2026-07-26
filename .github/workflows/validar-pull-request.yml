@@ -16,11 +16,20 @@ permissions:
 
 jobs:
   # ============================================================
-  # TRABAJO 1: VALIDAR EL FLUJO Y COMPILAR EL PROYECTO
+  # TRABAJO 1: VALIDAR Y COMPILAR EN LA COMPUTADORA DE DEISY
   # ============================================================
   validar-pull-request:
     name: Validar flujo y proyecto
-    runs-on: ubuntu-latest
+
+    # Envía este trabajo al runner autohospedado DEISY
+    runs-on:
+      - self-hosted
+      - windows
+      - x64
+
+    # Evita ejecutar Pull Requests provenientes de forks externos
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+
     timeout-minutes: 15
 
     env:
@@ -28,50 +37,63 @@ jobs:
 
     steps:
       # --------------------------------------------------------
+      # Mostrar que este trabajo se ejecuta en DEISY
+      # --------------------------------------------------------
+      - name: Mostrar información del runner
+        shell: powershell
+        run: |
+          Write-Host "=========================================="
+          Write-Host "Runner utilizado: $env:RUNNER_NAME"
+          Write-Host "Sistema operativo: $env:RUNNER_OS"
+          Write-Host "Arquitectura: $env:RUNNER_ARCH"
+          Write-Host "Carpeta de trabajo: $env:GITHUB_WORKSPACE"
+          Write-Host "=========================================="
+
+      # --------------------------------------------------------
       # Validar las ramas de origen y destino
       # --------------------------------------------------------
       - name: Validar ramas permitidas
-        shell: bash
+        shell: powershell
         env:
           RAMA_ORIGEN: ${{ github.head_ref }}
           RAMA_DESTINO: ${{ github.base_ref }}
         run: |
-          echo "Rama de origen: $RAMA_ORIGEN"
-          echo "Rama de destino: $RAMA_DESTINO"
+          Write-Host "Rama de origen: $env:RAMA_ORIGEN"
+          Write-Host "Rama de destino: $env:RAMA_DESTINO"
 
           # QA solamente acepta ramas feature/*
-          if [[ "$RAMA_DESTINO" == "QA" ]]; then
-            if [[ "$RAMA_ORIGEN" == feature/* ]]; then
-              echo "Flujo permitido: $RAMA_ORIGEN hacia QA"
+          if ($env:RAMA_DESTINO -eq "QA") {
+            if ($env:RAMA_ORIGEN -like "feature/*") {
+              Write-Host "Flujo permitido: $env:RAMA_ORIGEN hacia QA"
               exit 0
-            fi
+            }
 
-            echo "ERROR: QA solamente acepta Pull Requests desde feature/*."
-            exit 1
-          fi
+            throw "QA solamente acepta Pull Requests desde feature/*."
+          }
 
           # main solamente acepta cambios desde QA
-          if [[ "$RAMA_DESTINO" == "main" ]]; then
-            if [[ "$RAMA_ORIGEN" == "QA" ]]; then
-              echo "Flujo permitido: QA hacia main"
+          if ($env:RAMA_DESTINO -eq "main") {
+            if ($env:RAMA_ORIGEN -eq "QA") {
+              Write-Host "Flujo permitido: QA hacia main"
               exit 0
-            fi
+            }
 
-            echo "ERROR: main solamente acepta Pull Requests desde QA."
-            exit 1
-          fi
+            throw "main solamente acepta Pull Requests desde QA."
+          }
 
-          echo "ERROR: flujo de ramas no permitido."
-          exit 1
+          throw "Flujo de ramas no permitido."
 
       # --------------------------------------------------------
-      # Descargar el código del Pull Request
+      # Descargar el código del Pull Request en el runner
       # --------------------------------------------------------
-      - name: Descargar repositorio
+      - name: Descargar código del Pull Request
         uses: actions/checkout@v4
+        with:
+          clean: true
+          fetch-depth: 1
 
       # --------------------------------------------------------
-      # Preparar Node.js
+      # Configurar Node.js en la computadora de Deisy
       # --------------------------------------------------------
       - name: Configurar Node.js
         uses: actions/setup-node@v4
@@ -80,38 +102,53 @@ jobs:
           cache: npm
 
       # --------------------------------------------------------
-      # Instalar dependencias
+      # Mostrar las versiones utilizadas
+      # --------------------------------------------------------
+      - name: Mostrar versiones de Node y npm
+        shell: powershell
+        run: |
+          node --version
+          npm --version
+
+      # --------------------------------------------------------
+      # Descargar e instalar las dependencias
       # --------------------------------------------------------
       - name: Instalar dependencias
-        run: npm ci
+        shell: powershell
+        run: |
+          npm ci
 
       # --------------------------------------------------------
       # Revisar errores de código
       # --------------------------------------------------------
       - name: Ejecutar ESLint
-        run: npm run lint --if-present
+        shell: powershell
+        run: |
+          npm run lint --if-present
 
       # --------------------------------------------------------
-      # Verificar que Next.js compile correctamente
+      # Compilar el proyecto Next.js
       # --------------------------------------------------------
       - name: Compilar proyecto
-        run: npm run build
+        shell: powershell
+        run: |
+          npm run build
 
   # ============================================================
-  # TRABAJO 2: DOCKERIZAR EL PROYECTO EN EL RUNNER DEISY
+  # TRABAJO 2: DOCKERIZAR EN LA COMPUTADORA DE DEISY
   # ============================================================
   dockerizar-en-runner:
     name: Dockerizar en runner
 
-    # Esperar a que termine correctamente el trabajo anterior
+    # Esperar a que la validación anterior termine correctamente
     needs:
       - validar-pull-request
 
-    # Ejecutar solamente en Pull Requests hacia QA.
-    # También evita ejecutar código proveniente de forks externos.
-    if: ${{ github.base_ref == 'QA' && github.event.pull_request.head.repo.full_name == github.repository }}
+    # Docker solamente se ejecuta en Pull Requests hacia QA.
+    # También evita ejecutar código procedente de forks externos.
+    if: ${{ needs.validar-pull-request.result == 'success' && github.base_ref == 'QA' && github.event.pull_request.head.repo.full_name == github.repository }}
 
-    # Etiquetas correspondientes al runner DEISY
+    # Envía este trabajo al mismo runner autohospedado
     runs-on:
       - self-hosted
       - windows
@@ -126,28 +163,37 @@ jobs:
 
     steps:
       # --------------------------------------------------------
-      # Descargar en el runner el código del Pull Request
+      # Descargar nuevamente el código en el trabajo Docker
       # --------------------------------------------------------
       - name: Descargar código del Pull Request
         uses: actions/checkout@v4
+        with:
+          clean: true
+          fetch-depth: 1
 
       # --------------------------------------------------------
-      # Mostrar cuál runner está ejecutando el trabajo
+      # Demostrar que Docker también se ejecuta en DEISY
       # --------------------------------------------------------
       - name: Mostrar información del runner
         shell: powershell
         run: |
+          Write-Host "=========================================="
           Write-Host "Runner utilizado: $env:RUNNER_NAME"
           Write-Host "Sistema operativo: $env:RUNNER_OS"
           Write-Host "Arquitectura: $env:RUNNER_ARCH"
+          Write-Host "Carpeta de trabajo: $env:GITHUB_WORKSPACE"
+          Write-Host "=========================================="
 
       # --------------------------------------------------------
-      # Confirmar que Docker Desktop esté funcionando
+      # Confirmar que Docker Desktop y Docker Engine funcionan
       # --------------------------------------------------------
       - name: Comprobar Docker
         shell: powershell
         run: |
+          Write-Host "Comprobando Docker Desktop..."
           docker version
+
+          Write-Host "Comprobando Docker Engine..."
           docker info
 
       # --------------------------------------------------------
@@ -160,7 +206,7 @@ jobs:
             --filter "name=^/$env:CONTAINER_NAME$"
 
           if ($contenedor) {
-            Write-Host "Eliminando el contenedor anterior..."
+            Write-Host "Eliminando contenedor anterior..."
             docker rm -f $env:CONTAINER_NAME
           }
           else {
@@ -168,7 +214,7 @@ jobs:
           }
 
       # --------------------------------------------------------
-      # Construir la imagen a partir del Dockerfile
+      # Construir la imagen Docker
       # --------------------------------------------------------
       - name: Construir imagen Docker
         shell: powershell
@@ -179,24 +225,36 @@ jobs:
             --tag $env:IMAGE_NAME `
             .
 
+          if ($LASTEXITCODE -ne 0) {
+            throw "No fue posible construir la imagen Docker."
+          }
+
+          Write-Host "La imagen fue construida correctamente."
           docker image inspect $env:IMAGE_NAME
 
       # --------------------------------------------------------
-      # Iniciar el contenedor temporalmente
+      # Crear y ejecutar el contenedor temporal
       # --------------------------------------------------------
-      - name: Ejecutar contenedor de prueba
+      - name: Ejecutar contenedor temporal
         shell: powershell
         run: |
-          Write-Host "Ejecutando el contenedor $env:CONTAINER_NAME..."
+          Write-Host "Creando el contenedor $env:CONTAINER_NAME..."
 
           docker run `
             --detach `
             --name $env:CONTAINER_NAME `
-            --publish "${env:TEST_PORT}:3000" `
+            --publish "127.0.0.1:${env:TEST_PORT}:3000" `
             $env:IMAGE_NAME
 
+          if ($LASTEXITCODE -ne 0) {
+            throw "No fue posible iniciar el contenedor."
+          }
+
+          Write-Host "Contenedor iniciado correctamente."
+          docker ps --filter "name=$env:CONTAINER_NAME"
+
       # --------------------------------------------------------
-      # Comprobar que la aplicación responda con HTTP 200
+      # Comprobar que Next.js responda con HTTP 200
       # --------------------------------------------------------
       - name: Comprobar que la aplicación responda
         shell: powershell
@@ -213,6 +271,8 @@ jobs:
                 -UseBasicParsing `
                 -TimeoutSec 10
 
+              Write-Host "Código HTTP recibido: $($respuesta.StatusCode)"
+
               if ($respuesta.StatusCode -eq 200) {
                 Write-Host "La aplicación responde correctamente."
                 $aplicacionLista = $true
@@ -221,21 +281,31 @@ jobs:
             }
             catch {
               Write-Host "La aplicación todavía no responde."
-              Start-Sleep -Seconds 5
+
+              if ($intento -lt 12) {
+                Start-Sleep -Seconds 5
+              }
             }
           }
 
           if (-not $aplicacionLista) {
             Write-Host "La aplicación no respondió correctamente."
-
             docker logs $env:CONTAINER_NAME
-
-            throw "Falló la comprobación del contenedor."
+            throw "Falló la comprobación HTTP del contenedor."
           }
 
       # --------------------------------------------------------
-      # Mostrar logs y eliminar el contenedor temporal
-      # La imagen Docker se conserva en el runner
+      # Mostrar la imagen creada
+      # --------------------------------------------------------
+      - name: Mostrar imagen Docker creada
+        shell: powershell
+        run: |
+          Write-Host "Imagen generada por la pipeline:"
+          docker images conectando-desaparecidos
+
+      # --------------------------------------------------------
+      # Mostrar los logs y eliminar el contenedor temporal
+      # Se ejecuta incluso cuando una prueba falla
       # --------------------------------------------------------
       - name: Mostrar logs y limpiar contenedor
         if: always()
@@ -245,20 +315,18 @@ jobs:
             --filter "name=^/$env:CONTAINER_NAME$"
 
           if ($contenedor) {
+            Write-Host "=========================================="
             Write-Host "Logs del contenedor:"
+            Write-Host "=========================================="
+
             docker logs $env:CONTAINER_NAME
 
-            Write-Host "Eliminando el contenedor de prueba..."
+            Write-Host "=========================================="
+            Write-Host "Eliminando contenedor temporal..."
+            Write-Host "=========================================="
+
             docker rm -f $env:CONTAINER_NAME
           }
           else {
             Write-Host "No existe un contenedor para limpiar."
           }
-
-      # --------------------------------------------------------
-      # Mostrar la imagen que quedó guardada en el runner
-      # --------------------------------------------------------
-      - name: Mostrar imagen Docker creada
-        shell: powershell
-        run: |
-          docker images conectando-desaparecidos
