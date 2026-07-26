@@ -87,7 +87,7 @@ jobs:
       # Descargar el código del Pull Request en el runner
       # --------------------------------------------------------
       - name: Descargar código del Pull Request
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           clean: true
           fetch-depth: 1
@@ -96,10 +96,10 @@ jobs:
       # Configurar Node.js en la computadora de Deisy
       # --------------------------------------------------------
       - name: Configurar Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
+          package-manager-cache: false
 
       # --------------------------------------------------------
       # Mostrar las versiones utilizadas
